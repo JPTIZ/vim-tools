@@ -21,6 +21,7 @@ def split_sections(text):
 
 
 def split_subsections(text):
+    # TODO: Recursivelly extract and separate contents from subsections.
     subsections = re.findall(r'^([\w ]+)\n-+\n*(([\w\W \n](?!^[\w ]+\n-+))*)',
                              text, re.MULTILINE)
     return [Section(title=sub[0],
@@ -44,8 +45,12 @@ def as_link(title):
 
 
 def make_index(document):
-    def sections_index(document):
-        return '\n'.join(f'{i+1}. {as_link(section.title)}'
+    def sections_index(document, level=0):
+        if not isinstance(document, Section):
+            return ''
+        return '\n'.join(' '*level +
+                         f'{i+1}. {as_link(section.title)}' +
+                         sections_index(document.subsections, level+1)
                          for i, section in enumerate(document.subsections))
 
     document = without_index(document)
@@ -58,13 +63,19 @@ def make_index(document):
 
 
 def to_markdown(document):
+    TITLES = ['=', '-', '*']
+
+    def make_title(title, level: int=0):
+        if level < 2:
+            return (f'\n{title}\n'
+                    f'{TITLES[level]*len(title)}\n\n')
+        return f'\n{TITLES[2]*len(title)} {title}\n\n'
+
     if isinstance(document, Section):
-        return (f'{document.title}\n' +
-                ('='*len(document.title)) + '\n' +
-                '\n'.join((f'\n{section.title}\n' +
-                           '-'*len(section.title) + '\n\n' +
+        return (make_title(document.title) +
+                '\n'.join((make_title(section.title, 1) +
                            section.contents
-                           ) for section in document.subsections))
+                           ) for section in document.subsections)).strip()
     return to_markdown(split_sections(document))
 
 
