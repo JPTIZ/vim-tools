@@ -13,7 +13,7 @@ class Section(NamedTuple):
 
 
 def split_sections(text):
-    sections = re.findall(r'^([\w ]+)\n=+\n*(([\w\W \n](?![\w ]+\n=+))*)',
+    sections = re.findall(r'^([\w ]+)\n=+\n*(([\w\W \n](?!^[\w ]+\n=+))*)',
                           text, re.MULTILINE)
     return Section(title=sections[0][0],
                    contents='',
@@ -21,7 +21,7 @@ def split_sections(text):
 
 
 def split_subsections(text):
-    subsections = re.findall(r'^([\w ]+)\n-+\n*(([\w\W \n](?![\w ]+\n-+))*)',
+    subsections = re.findall(r'^([\w ]+)\n-+\n*(([\w\W \n](?!^[\w ]+\n-+))*)',
                              text, re.MULTILINE)
     return [Section(title=sub[0],
                     contents=sub[1],
@@ -52,11 +52,21 @@ def make_index(document):
     index = Section(title='Índice',
                     contents=sections_index(document),
                     subsections=[])
-    document = Section(title=document.title,
-                       contents=document.contents,
-                       subsections=[index] + document.subsections)
-    print(index.contents)
+    return Section(title=document.title,
+                   contents=document.contents,
+                   subsections=[index] + document.subsections)
+
+
+def to_markdown(document):
+    if isinstance(document, Section):
+        return (f'{document.title}\n' +
+                ('='*len(document.title)) + '\n' +
+                '\n'.join((f'\n{section.title}\n' +
+                           '-'*len(section.title) + '\n\n' +
+                           section.contents
+                           ) for section in document.subsections))
+    return to_markdown(split_sections(document))
 
 
 if __name__ == '__main__':
-    make_index(stdin.read())
+    print(to_markdown(make_index(stdin.read())))
