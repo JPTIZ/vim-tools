@@ -6,6 +6,9 @@ from sys import stdin
 from typing import NamedTuple, Sequence
 
 
+SYMBOLS = '\",_!'
+
+
 class Section(NamedTuple):
     title: str
     contents: str
@@ -13,7 +16,7 @@ class Section(NamedTuple):
 
 
 def split_sections(text):
-    sections = re.findall(r'^([\w ]+)\n=+\n*(([\w\W \n](?!^[\w ]+\n=+))*)',
+    sections = re.findall(fr'^([\w {SYMBOLS}]+)\n=+\n*(([\w\W \n](?!^[\w ]+\n=+))*)',
                           text, re.MULTILINE)
     return Section(title=sections[0][0],
                    contents='',
@@ -21,8 +24,8 @@ def split_sections(text):
 
 
 def split_subsections(text):
-    # TODO: Recursivelly extract and separate contents from subsections.
-    subsections = re.findall(r'^([\w ]+)\n-+\n*(([\w\W \n](?!^[\w ]+\n-+))*)',
+    # TODO: Recursively extract and separate contents from subsections.
+    subsections = re.findall(fr'^([\w {SYMBOLS}]+)\n-+\n*(([\w\W \n](?!^[\w ]+\n-+))*)',
                              text, re.MULTILINE)
     return [Section(title=sub[0],
                     contents=sub[1],
